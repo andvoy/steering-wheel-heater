@@ -1,0 +1,7 @@
+build/
+node_modules/
+*.elf
+*.eep
+*.map
+*.with_bootloader.hex
+
