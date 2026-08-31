@@ -1,0 +1,15 @@
+{
+  "version": "1.1",
+  "sha256": {
+    "firmware/steering_wheel_heater_v1_1/steering_wheel_heater_v1_1.hex": "a52be4db8619308b4440364b65e92f52a4b3f5f3cd9d1c837671a2b032ef7c73",
+    "firmware/steering_wheel_heater_v1_1/steering_wheel_heater_v1_1.ino": "5d0edcda655ca40e213baf24f019700ebab2fc6878071f8440c7ff69246c160d",
+    "firmware/steering_wheel_heater_v1_1-optiboot.hex": "eee387854d8c2f9896f13f821cf4c6b6fe24f8a438927b5c0e550a1574c6d15b",
+    "README.md": "6cc54d55fb0234843f03576aa4af3f87a979bdcd49d076bd865b1c085ddec582",
+    "steering-wheel-heater-1.1.html": "2a5b2b734c54aa67f32c1c61eb0708659a525bdcfd132dbc5ab6e2f2f74c572a",
+    "steering-wheel-heater-1.1.pdf": "298260c714bc5476dba16164453aeee279fccd67f5f9755c3efcf75bb876a0a6",
+    "verification/firmware-sim.cjs": "b67b5c90eb2095a8ca2ac2625926afd49901e5c9414c8bd337164aefb2d043f1",
+    "verification/package.json": "53253009dddfd840d039c36eadd1827c353e4bb75b66754da4669bd0ed359ec4",
+    "verification/test-results-optiboot.json": "4536f6917e279a6aa5c9747b507b40bd0dd7273f8ec05a1c0321462cc2fa4c61",
+    "verification/test-results.json": "8614ee90657745e418a0a78d2b46e1e6ba39a905020e369a288ff910fcc4ba87"
+  }
+}
