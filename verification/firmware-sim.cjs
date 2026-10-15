@@ -7,8 +7,8 @@ const {execFileSync} = require('node:child_process');
 const {createHash} = require('node:crypto');
 const avr = require('avr8js');
 
-const build = path.resolve(process.argv[2] || 'tmp/firmware-1.1');
-const name = 'steering_wheel_heater_v1_1.ino';
+const build = path.resolve(process.argv[2] || 'tmp/firmware-1.2');
+const name = 'steering_wheel_heater_v1_2.ino';
 const avrBin = process.env.AVR_BIN;
 assert.ok(avrBin, 'Set AVR_BIN to the bin directory of the AVR toolchain used for compilation.');
 const symbols = {};
@@ -113,7 +113,7 @@ test('power-on does not clear stored FAULT or pulse heater',()=>{const s=new Sim
 test('unknown reset does not clear stored FAULT',()=>new Sim({reset:0,eeprom:saved(0x5A)}).run(100).expectFault(F.Stored));
 for(const [name,options,code] of [
   ['NTC open',{ntc:1023},F.Sensor],['NTC short',{ntc:0},F.Sensor],['NTC out of range',{temp:140},F.Sensor],
-  ['overtemperature',{temp:50},F.Overheat],['48 V absent',{supply:false},F.Supply],['heater open',{heater:false},F.Supply],
+  ['overtemperature',{temp:50},F.Overheat],['35 V absent',{supply:false},F.Supply],['heater open',{heater:false},F.Supply],
   ['Q1 D-S short',{q1Short:true},F.Q1],['Q2 D-S short',{q2Short:true},F.Q2],
   ['Q1 cannot conduct',{q1Open:true},F.Conduction],['Q2 cannot conduct',{q2Open:true},F.Conduction],
   ['sense stuck low',{sense:0},F.Supply],['sense stuck high',{sense:427},F.Conduction]
@@ -151,7 +151,7 @@ test('button held before a new FAULT cannot automatically clear that FAULT',()=>
 });
 for(const [name,options] of [
   ['NTC open',{ntc:1023}],['NTC short',{ntc:0}],['NTC range',{temp:140}],['hot wheel',{temp:40}],['overheat',{temp:50}],
-  ['no 48 V',{supply:false}],['heater open',{heater:false}],['Q1 short',{q1Short:true}],['Q2 short',{q2Short:true}],
+  ['no 35 V',{supply:false}],['heater open',{heater:false}],['Q1 short',{q1Short:true}],['Q2 short',{q2Short:true}],
   ['Q1 open',{q1Open:true}],['Q2 open',{q2Open:true}],['sense low',{sense:0}],['sense high',{sense:427}]
 ]) test(`long hold cannot clear persistent ${name}`,()=>{
   const s=new Sim({...options,eeprom:saved(0x5A)}).run(100);const writes=s.writes.length;
@@ -226,7 +226,7 @@ test('warm requested ON remains below emergency threshold; emergency still latch
   const s=new Sim({temp:45,eeprom:saved(0xC3)}).run(300);assert.equal(s.mode,HOLD);s.safe();assert.equal(s.loadPulses,0);
   s.temp=50;s.run(300);s.expectFault(F.Overheat);
 });
-test('documented power-sequencing limitation: loss of 48 V with Nano alive latches FAULT',()=>{
+test('documented power-sequencing limitation: loss of 35 V with Nano alive latches FAULT',()=>{
   const s=new Sim({eeprom:saved(0xC3)}).run(330);s.supply=false;s.run(300);s.expectFault(F.Supply);
   new Sim({reset:0,eeprom:s.eeprom.memory}).run(100).expectFault(F.Stored);
 });
@@ -257,4 +257,5 @@ test('watchdog interrupts a stuck running loop, next startup is FAULT',()=>{
   new Sim({reset:8,eeprom:s.eeprom.memory}).run(100).expectFault(F.Watchdog);
 });
 console.log(`\n${results.length} tests passed. Model excludes analog transients, bootloader, physical temperature and real wiring.`);
-if(process.env.REPORT_PATH)fs.writeFileSync(process.env.REPORT_PATH,JSON.stringify({firmware:'1.1',simulator:'avr8js 0.21.0',hexSha256:createHash('sha256').update(fs.readFileSync(path.join(build,name+'.hex'))).digest('hex'),tests:results},null,2)+'\n');
+if(process.env.REPORT_PATH)fs.writeFileSync(process.env.REPORT_PATH,JSON.stringify({firmware:'1.2',simulator:'avr8js 0.21.0',hexSha256:createHash('sha256').update(fs.readFileSync(path.join(build,name+'.hex'))).digest('hex'),tests:results},null,2)+'\n');
+
