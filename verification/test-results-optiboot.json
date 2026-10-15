@@ -80,7 +80,7 @@
       "status": "PASS"
     },
     {
-      "test": "startup detects 48 V absent",
+      "test": "startup detects 35 V absent",
       "status": "PASS"
     },
     {
@@ -160,7 +160,7 @@
       "status": "PASS"
     },
     {
-      "test": "long hold cannot clear persistent no 48 V",
+      "test": "long hold cannot clear persistent no 35 V",
       "status": "PASS"
     },
     {
@@ -356,7 +356,7 @@
       "status": "PASS"
     },
     {
-      "test": "documented power-sequencing limitation: loss of 48 V with Nano alive latches FAULT",
+      "test": "documented power-sequencing limitation: loss of 35 V with Nano alive latches FAULT",
       "status": "PASS"
     },
     {
