@@ -9,8 +9,8 @@
     "steering-wheel-heater-1.2.pdf": "d9ed5c44ee687cc18eff098e40fd47298d13e42379290810115ae86b92d9fd88",
     "verification/firmware-sim.cjs": "de31bb901ebdf21ebbc112da2a0a326a2a472a90642bccc0772cac6a330730dc",
     "verification/package.json": "5039d04455a9aafbaf2993a3b1be95dca8f2cd2184b61c90137c3cffc52ac3a3",
-    "verification/test-results-optiboot.json": "6453a86edfb440b2af4244ec72fe3f12a06101032e75d772d63ce2f5a1e7a68a",
-    "verification/test-results.json": "71048a5ba38c679b49c1e08f7833c9e301ef6f22acff6448583e90c70a18e55d"
+    "verification/test-results-optiboot.json": "2fa52619f7fca681332f8187a5064b80075fb199fe1c262f0492f1b636179a09",
+    "verification/test-results.json": "0b79e48697188a9632fdb70fd11baa32304de9243e5cb5da9e85c3d493df0185"
   }
 }
 
