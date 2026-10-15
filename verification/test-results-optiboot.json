@@ -1,5 +1,5 @@
 {
-  "firmware": "1.1",
+  "firmware": "1.2",
   "simulator": "avr8js 0.21.0",
   "hexSha256": "eee387854d8c2f9896f13f821cf4c6b6fe24f8a438927b5c0e550a1574c6d15b",
   "tests": [
@@ -389,3 +389,4 @@
     }
   ]
 }
+
