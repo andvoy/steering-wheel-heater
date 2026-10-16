@@ -20,6 +20,7 @@
 
 #define HEATER_VERSION "1.3"
 #ifndef HEATER_OPTIBOOT_RESET_CAUSE
+// Оставить 0; ставить 1 только для проверенного Optiboot >=4.6, передающего причину сброса через r2.
 #define HEATER_OPTIBOOT_RESET_CAUSE 0
 #endif
 #if !defined(__AVR_ATmega328P__) || F_CPU != 16000000UL
@@ -48,32 +49,46 @@ void earlySafetyInit() {
 }
 
 // ================= НАСТРОЙКИ ПОЛЬЗОВАТЕЛЯ =================
-// Электрические параметры нагревателя. Ток аппаратно не измеряется: эти данные
-// задают расчётные проверки и пороги A1, но не заменяют измерения на собранном модуле.
-constexpr float SUPPLY_V = 42.0f;
-constexpr float HEATER_R_REF_OHM = 19.47f;    // Четырёхпроводное измерение.
-constexpr float HEATER_R_REF_C = 21.0f;
-constexpr float WIRE_DIAMETER_MM = 0.204f;    // Вольфрам.
-constexpr float DESIGN_CURRENT_LIMIT_A = 3.0f;
-constexpr float DESIGN_POWER_LIMIT_W = 120.0f;
+// Для своей обмотки указать напряжение и холодное сопротивление, затем температуры BOOST/HOLD.
+// Дроби писать через точку: 33.2f. После изменений заново скомпилировать и загрузить скетч.
+// Электрические данные: расчёт I=U/R, P=U*U/R. Реальный ток и мощность модуль не измеряет.
+constexpr float SUPPLY_V = 42.0f;             // В: фактическое питание обмотки; меняет расчёт I/P и пороги A1.
+// SUPPLY_V не регулирует преобразователь: его выходное напряжение выставить вручную.
+constexpr float HEATER_R_REF_OHM = 19.47f;     // Ом: измеренное холодное сопротивление; меняет расчёт I/P.
+constexpr float HEATER_R_REF_C = 21.0f;        // °C: температура измерения сопротивления; только справочная запись.
+constexpr float WIRE_DIAMETER_MM = 0.204f;     // мм: диаметр вольфрама; только справочная запись, на PWM не влияет.
+constexpr float DESIGN_CURRENT_LIMIT_A = 3.0f; // А: допустимый расчётный ток аппаратуры, проверяется при компиляции.
+constexpr float DESIGN_POWER_LIMIT_W = 120.0f;// Вт: допустимая расчётная мощность, проверяется при компиляции.
+// Эти два предела не ограничивают реальный ток; задавать по возможностям собранной силовой цепи.
 
-// Температурный режим. Для указанного NTC: 36,4 °C ≈ 6,11 кОм;
-// 33,2 °C ≈ 7,00 кОм. После BOOST руль остывает до цели HOLD.
-constexpr float BOOST_EXIT_C = 36.4f;
-constexpr float TARGET_C = 33.2f;
-constexpr float FORCE_OFF_C = 39.9f;
-constexpr float SOFT_OFF_C = 44.0f, SOFT_RESET_C = 42.0f;
-constexpr float EMERGENCY_C = 49.0f;
-constexpr uint32_t BOOST_MAX_MS = 300000;     // Не более 5 минут.
-constexpr uint8_t BOOST_PWM = 255, HOLD_MAX_PWM = 180;
-constexpr float KP = 35.0f, KI = 0.8f;
+// Температуры относятся к месту установки NTC. После BOOST нагрев ждёт остывания до цели HOLD.
+constexpr float BOOST_EXIT_C = 36.4f;         // °C: конец быстрого прогрева; для нашего NTC около 6,11 кОм.
+constexpr float TARGET_C = 33.2f;             // °C: цель поддержания; выше значение - теплее, сейчас около 7,00 кОм.
+constexpr float FORCE_OFF_C = 39.9f;          // °C: закрыть оба ключа, запретить и диагностические импульсы.
+constexpr float SOFT_OFF_C = 44.0f;           // °C: включить дополнительную температурную блокировку.
+constexpr float SOFT_RESET_C = 42.0f;         // °C: снять эту блокировку после остывания; рабочая цель отдельная.
+constexpr float EMERGENCY_C = 49.0f;          // °C: записать FAULT; сброс кнопкой 5 с после успешного самотеста.
+// Порядок: TARGET_C < BOOST_EXIT_C < FORCE_OFF_C < SOFT_OFF_C < EMERGENCY_C;
+// SOFT_RESET_C < SOFT_OFF_C. Защитные температуры при повторении схемы оставить прежними.
+constexpr uint32_t BOOST_MAX_MS = 300000;     // мс: предел времени BOOST; 300000 = 5 минут, затем HOLD.
+constexpr uint8_t BOOST_PWM = 255;            // 0..255: мощность BOOST; 255 = 100%, 128 примерно 50%.
+constexpr uint8_t HOLD_MAX_PWM = 180;         // 0..255: верхний предел мощности HOLD; 180 примерно 71%.
+// PWM меняет среднюю мощность; ток во время включённого импульса определяется напряжением и обмоткой.
+constexpr float KP = 35.0f;                  // PWM/°C: реакция на недогрев; больше - резче. Обычно не менять.
+constexpr float KI = 0.8f;                   // PWM/(°C*с): устранение постоянного недогрева; обычно не менять.
 
-// Датчик температуры и измерительный делитель A1.
-constexpr float NTC_R25 = 10000.0f, NTC_FIXED = 10000.0f, NTC_BETA = 3977.0f;
-constexpr float NTC_OFFSET_C = 0.0f;          // Поправка после калибровки.
-constexpr float ADC_REF_V = 5.0f;
-constexpr float A1_TOP_OHM = 220000.0f, A1_BOTTOM_OHM = 10000.0f;
-constexpr float A1_HIGH_RATIO = 0.35f, A1_LOW_RATIO = 0.08f;
+// Менять следующие параметры при замене NTC, резисторов делителей или после калибровки.
+constexpr float NTC_R25 = 10000.0f;           // Ом: сопротивление NTC при 25 °C, взять из его документации.
+constexpr float NTC_FIXED = 10000.0f;         // Ом: установленный R1; используется для расчёта сопротивления NTC.
+constexpr float NTC_BETA = 3977.0f;           // K: коэффициент B датчика; определяет пересчёт сопротивления в °C.
+constexpr float NTC_OFFSET_C = 0.0f;          // °C: прибавка к показанию; +1.0f повышает его на 1 °C.
+// Поправку NTC_OFFSET_C определять сравнением с термометром при установившейся температуре.
+constexpr float ADC_REF_V = 5.0f;            // В: опорное напряжение АЦП, здесь питание Nano; влияет на пороги A1.
+constexpr float A1_TOP_OHM = 220000.0f;       // Ом: установленный R6, верхнее плечо делителя самотеста.
+constexpr float A1_BOTTOM_OHM = 10000.0f;     // Ом: установленный R7, нижнее плечо; оба номинала меняют пороги A1.
+constexpr float A1_HIGH_RATIO = 0.35f;        // Доля расчётного A1: минимум для HIGH; обычно оставить 0.35f.
+constexpr float A1_LOW_RATIO = 0.08f;         // Доля расчётного A1: максимум для LOW; обычно оставить 0.08f.
+// Доли задают допуски самотеста, а не точность стабилизации питания. Пороги ниже вычисляются автоматически.
 // ==========================================================
 
 constexpr float NOMINAL_CURRENT_A = SUPPLY_V / HEATER_R_REF_OHM;
@@ -373,4 +388,3 @@ void loop() {
   updateLed(millis());
   wdt_reset();  // Только после выполнения всего прохода; внутри ожиданий не кормить.
 }
-

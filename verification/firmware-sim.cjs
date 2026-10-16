@@ -271,4 +271,3 @@ test('watchdog interrupts a stuck running loop, next startup is FAULT',()=>{
 });
 console.log(`\n${results.length} tests passed. Model excludes analog transients, bootloader, physical temperature and real wiring.`);
 if(process.env.REPORT_PATH)fs.writeFileSync(process.env.REPORT_PATH,JSON.stringify({firmware:'1.3',simulator:'avr8js 0.21.0',hexSha256:createHash('sha256').update(fs.readFileSync(path.join(build,name+'.hex'))).digest('hex'),tests:results},null,2)+'\n');
-
