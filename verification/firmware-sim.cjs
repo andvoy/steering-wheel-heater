@@ -7,8 +7,8 @@ const {execFileSync} = require('node:child_process');
 const {createHash} = require('node:crypto');
 const avr = require('avr8js');
 
-const build = path.resolve(process.argv[2] || 'tmp/firmware-1.2');
-const name = 'steering_wheel_heater_v1_2.ino';
+const build = path.resolve(process.argv[2] || 'tmp/firmware-1.3');
+const name = 'steering_wheel_heater_v1_3.ino';
 const avrBin = process.env.AVR_BIN;
 assert.ok(avrBin, 'Set AVR_BIN to the bin directory of the AVR toolchain used for compilation.');
 const symbols = {};
@@ -16,7 +16,7 @@ for (const line of execFileSync(path.join(avrBin,process.platform==='win32'?'avr
   const m = line.match(/^([0-9a-f]+)\s+[bBdD]\s+(\S+)\s*$/);
   if (m) symbols[m[2]] = parseInt(m[1],16)-0x800000;
 }
-for (const key of ['mode','faultCode','timer0_millis','lastControlAt','boostStartedAt','integral','softCutoff','powerStageReady']) assert.ok(key in symbols,key);
+for (const key of ['mode','faultCode','timer0_millis','lastControlAt','boostStartedAt','integral','temperatureC','softCutoff','powerStageReady']) assert.ok(key in symbols,key);
 const flash = new Uint8Array(32768);
 for (const line of fs.readFileSync(path.join(build,name+'.hex'),'utf8').trim().split(/\r?\n/)) {
   const bytes = Buffer.from(line.slice(1),'hex');
@@ -26,6 +26,8 @@ for (const line of fs.readFileSync(path.join(build,name+'.hex'),'utf8').trim().s
 const saved = state => Uint8Array.from([0xB1,state,state^255]);
 const OFF=0, BOOST=1, HOLD=2, FAULT=3;
 const F={Sensor:1,Overheat:2,Supply:3,Q1:4,Q2:5,Conduction:6,Watchdog:7,Brownout:8,Stored:9,Eeprom:10};
+const SUPPLY_HIGH_ADC=374; // 42 V through 220k/10k divider at 5 V ADC reference.
+const ntcAdc = resistance => Math.round(1023*resistance/(10000+resistance));
 const WD_RESET = Symbol('watchdog reset');
 
 class Sim {
@@ -58,7 +60,7 @@ class Sim {
       } else {
         const q1=this.q1Short || (!this.q1Open && this.portB.pinState(1)===avr.PinState.High);
         const q2=this.q2Short || (!this.q2Open && this.portB.pinState(0)===avr.PinState.High);
-        value=this.sense===null ? (!this.supply || !this.heater || (q1&&q2) ? 0 : 427) : this.sense;
+        value=this.sense===null ? (!this.supply || !this.heater || (q1&&q2) ? 0 : SUPPLY_HIGH_ADC) : this.sense;
       }
       this.cpu.addClockEvent(()=>this.adc.completeADCRead(value),this.adc.sampleCycles);
     };
@@ -113,10 +115,10 @@ test('power-on does not clear stored FAULT or pulse heater',()=>{const s=new Sim
 test('unknown reset does not clear stored FAULT',()=>new Sim({reset:0,eeprom:saved(0x5A)}).run(100).expectFault(F.Stored));
 for(const [name,options,code] of [
   ['NTC open',{ntc:1023},F.Sensor],['NTC short',{ntc:0},F.Sensor],['NTC out of range',{temp:140},F.Sensor],
-  ['overtemperature',{temp:50},F.Overheat],['35 V absent',{supply:false},F.Supply],['heater open',{heater:false},F.Supply],
+  ['overtemperature',{temp:50},F.Overheat],['42 V absent',{supply:false},F.Supply],['heater open',{heater:false},F.Supply],
   ['Q1 D-S short',{q1Short:true},F.Q1],['Q2 D-S short',{q2Short:true},F.Q2],
   ['Q1 cannot conduct',{q1Open:true},F.Conduction],['Q2 cannot conduct',{q2Open:true},F.Conduction],
-  ['sense stuck low',{sense:0},F.Supply],['sense stuck high',{sense:427},F.Conduction]
+  ['sense stuck low',{sense:0},F.Supply],['sense stuck high',{sense:SUPPLY_HIGH_ADC},F.Conduction]
 ]) test('startup detects '+name,()=>new Sim(options).run(100).expectFault(code));
 test('35 ms debounce, one action while held, second press switches OFF',()=>{
   const s=new Sim().run(100);
@@ -151,8 +153,8 @@ test('button held before a new FAULT cannot automatically clear that FAULT',()=>
 });
 for(const [name,options] of [
   ['NTC open',{ntc:1023}],['NTC short',{ntc:0}],['NTC range',{temp:140}],['hot wheel',{temp:40}],['overheat',{temp:50}],
-  ['no 35 V',{supply:false}],['heater open',{heater:false}],['Q1 short',{q1Short:true}],['Q2 short',{q2Short:true}],
-  ['Q1 open',{q1Open:true}],['Q2 open',{q2Open:true}],['sense low',{sense:0}],['sense high',{sense:427}]
+  ['no 42 V',{supply:false}],['heater open',{heater:false}],['Q1 short',{q1Short:true}],['Q2 short',{q2Short:true}],
+  ['Q1 open',{q1Open:true}],['Q2 open',{q2Open:true}],['sense low',{sense:0}],['sense high',{sense:SUPPLY_HIGH_ADC}]
 ]) test(`long hold cannot clear persistent ${name}`,()=>{
   const s=new Sim({...options,eeprom:saved(0x5A)}).run(100);const writes=s.writes.length;
   s.press().jump(5100);s.expectFault(F.Stored);assert.equal(s.writes.length,writes);
@@ -208,7 +210,7 @@ test('trip sequence ON -> power-off -> cold restart -> OFF button -> next trip O
 test('repeated warm restarts keep ON, then cooling runs full test before HOLD power',()=>{
   let memory=saved(0xC3);
   for(let n=0;n<3;n++) {const s=new Sim({reset:0,temp:41,eeprom:memory}).run(300);assert.equal(s.mode,HOLD);s.safe();assert.equal(s.loadPulses,0);assert.equal(s.writes.length,0);memory=s.eeprom.memory;}
-  const s=new Sim({reset:0,temp:41,eeprom:memory}).run(300);s.temp=35;s.run(1800);
+  const s=new Sim({reset:0,temp:41,eeprom:memory}).run(300);s.temp=30;s.run(2400);
   assert.equal(s.mode,HOLD);assert.equal(s.byte('powerStageReady'),1);assert.ok(s.pwm>0);assert.ok(s.enabled);assert.equal(s.eeprom.memory[1],0xC3);
 });
 for(const [name,options,code] of [
@@ -226,12 +228,23 @@ test('warm requested ON remains below emergency threshold; emergency still latch
   const s=new Sim({temp:45,eeprom:saved(0xC3)}).run(300);assert.equal(s.mode,HOLD);s.safe();assert.equal(s.loadPulses,0);
   s.temp=50;s.run(300);s.expectFault(F.Overheat);
 });
-test('documented power-sequencing limitation: loss of 35 V with Nano alive latches FAULT',()=>{
+test('documented power-sequencing limitation: loss of 42 V with Nano alive latches FAULT',()=>{
   const s=new Sim({eeprom:saved(0xC3)}).run(330);s.supply=false;s.run(300);s.expectFault(F.Supply);
   new Sim({reset:0,eeprom:s.eeprom.memory}).run(100).expectFault(F.Stored);
 });
-test('36 C transition to HOLD and power clamp <=180',()=>{
+test('36.4 C transition to HOLD and power clamp <=180',()=>{
   const s=new Sim({eeprom:saved(0xC3)}).run(330);s.temp=37;s.run(300);assert.equal(s.mode,HOLD);assert.ok(s.pwm<=180);
+});
+test('measured NTC points map 6.11 kOhm to 36.4 C and 7.00 kOhm to 33.2 C',()=>{
+  const boostExit=new Sim({ntc:ntcAdc(6110)}).run(100);
+  const holdTarget=new Sim({ntc:ntcAdc(7000)}).run(100);
+  assert.ok(Math.abs(boostExit.float('temperatureC')-36.4)<0.25);
+  assert.ok(Math.abs(holdTarget.float('temperatureC')-33.2)<0.25);
+});
+test('BOOST exits at 36.4 C, HOLD stays off above target and resumes below 33.2 C',()=>{
+  const s=new Sim({eeprom:saved(0xC3)}).run(330);
+  s.temp=36.5;s.run(300);assert.equal(s.mode,HOLD);assert.equal(s.pwm,0);
+  s.temp=32.5;s.run(2400);assert.equal(s.mode,HOLD);assert.ok(s.pwm>0);assert.ok(s.enabled);
 });
 test('BOOST timeout and actual millis interval',()=>{
   const s=new Sim({eeprom:saved(0xC3)}).run(330);const jump=s.u32('timer0_millis')+300001;s.u32('timer0_millis',jump);s.run(10);assert.equal(s.mode,HOLD);assert.ok(s.float('integral')<=180);
@@ -257,5 +270,5 @@ test('watchdog interrupts a stuck running loop, next startup is FAULT',()=>{
   new Sim({reset:8,eeprom:s.eeprom.memory}).run(100).expectFault(F.Watchdog);
 });
 console.log(`\n${results.length} tests passed. Model excludes analog transients, bootloader, physical temperature and real wiring.`);
-if(process.env.REPORT_PATH)fs.writeFileSync(process.env.REPORT_PATH,JSON.stringify({firmware:'1.2',simulator:'avr8js 0.21.0',hexSha256:createHash('sha256').update(fs.readFileSync(path.join(build,name+'.hex'))).digest('hex'),tests:results},null,2)+'\n');
+if(process.env.REPORT_PATH)fs.writeFileSync(process.env.REPORT_PATH,JSON.stringify({firmware:'1.3',simulator:'avr8js 0.21.0',hexSha256:createHash('sha256').update(fs.readFileSync(path.join(build,name+'.hex'))).digest('hex'),tests:results},null,2)+'\n');
 

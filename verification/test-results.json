@@ -1,7 +1,7 @@
 {
-  "firmware": "1.2",
+  "firmware": "1.3",
   "simulator": "avr8js 0.21.0",
-  "hexSha256": "a52be4db8619308b4440364b65e92f52a4b3f5f3cd9d1c837671a2b032ef7c73",
+  "hexSha256": "1e1d2f6dd6954a4320ae3f19a7ceb47898f11c947719c11899e3b3850c7e3e21",
   "tests": [
     {
       "test": "blank EEPROM: self-test, READY/OFF, green LED",
@@ -72,7 +72,7 @@
       "status": "PASS"
     },
     {
-      "test": "startup detects 35 V absent",
+      "test": "startup detects 42 V absent",
       "status": "PASS"
     },
     {
@@ -152,7 +152,7 @@
       "status": "PASS"
     },
     {
-      "test": "long hold cannot clear persistent no 35 V",
+      "test": "long hold cannot clear persistent no 42 V",
       "status": "PASS"
     },
     {
@@ -348,11 +348,19 @@
       "status": "PASS"
     },
     {
-      "test": "documented power-sequencing limitation: loss of 35 V with Nano alive latches FAULT",
+      "test": "documented power-sequencing limitation: loss of 42 V with Nano alive latches FAULT",
       "status": "PASS"
     },
     {
-      "test": "36 C transition to HOLD and power clamp <=180",
+      "test": "36.4 C transition to HOLD and power clamp <=180",
+      "status": "PASS"
+    },
+    {
+      "test": "measured NTC points map 6.11 kOhm to 36.4 C and 7.00 kOhm to 33.2 C",
+      "status": "PASS"
+    },
+    {
+      "test": "BOOST exits at 36.4 C, HOLD stays off above target and resumes below 33.2 C",
       "status": "PASS"
     },
     {

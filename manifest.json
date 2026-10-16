@@ -1,16 +1,16 @@
 {
-  "version": "1.2",
+  "version": "1.3",
   "sha256": {
-    "firmware/steering_wheel_heater_v1_2/steering_wheel_heater_v1_2.hex": "a52be4db8619308b4440364b65e92f52a4b3f5f3cd9d1c837671a2b032ef7c73",
-    "firmware/steering_wheel_heater_v1_2/steering_wheel_heater_v1_2.ino": "bee913e414afc5b4b75d425685eb65f18d6c326710a36b33aa9b89d0aa872334",
-    "firmware/steering_wheel_heater_v1_2-optiboot.hex": "eee387854d8c2f9896f13f821cf4c6b6fe24f8a438927b5c0e550a1574c6d15b",
-    "README.md": "25b97987a2f7cde5b9ecfec69a4b6471fe0f9825e9fc113a37c60b62fcee8b3a",
-    "steering-wheel-heater-1.2.html": "0a3d2eec02db347afedc6207a80d670e2cb0e8b3bbe8ee2648c0f079c4ac6cb4",
-    "steering-wheel-heater-1.2.pdf": "d9ed5c44ee687cc18eff098e40fd47298d13e42379290810115ae86b92d9fd88",
-    "verification/firmware-sim.cjs": "de31bb901ebdf21ebbc112da2a0a326a2a472a90642bccc0772cac6a330730dc",
-    "verification/package.json": "5039d04455a9aafbaf2993a3b1be95dca8f2cd2184b61c90137c3cffc52ac3a3",
-    "verification/test-results-optiboot.json": "2fa52619f7fca681332f8187a5064b80075fb199fe1c262f0492f1b636179a09",
-    "verification/test-results.json": "0b79e48697188a9632fdb70fd11baa32304de9243e5cb5da9e85c3d493df0185"
+    "firmware/steering_wheel_heater_v1_3/steering_wheel_heater_v1_3.hex": "1e1d2f6dd6954a4320ae3f19a7ceb47898f11c947719c11899e3b3850c7e3e21",
+    "firmware/steering_wheel_heater_v1_3/steering_wheel_heater_v1_3.ino": "a52cf75505fed8a9cedf84b676c877ff9955b8f866b21b42c76d113c36396a8f",
+    "firmware/steering_wheel_heater_v1_3-optiboot.hex": "6077bb4fdd148fd6173527ba6eee2b19ca72d9e9afd009bd62b4d96fffcae937",
+    "README.md": "b9c9d73235fd1c4eba45de03bdd60e7d887032696e24745daa12e2e72746662a",
+    "steering-wheel-heater-1.3.html": "3b98fb061298a249dfee66e6a31ab799cb5dc012d9508a90795dfd925c9766f6",
+    "steering-wheel-heater-1.3.pdf": "32f12cd6cfed6da1b9f4d3a88c4fb05e2bae4270c27c40569b3a769d7ffb5a38",
+    "verification/firmware-sim.cjs": "6f31bc496a8539d78d867b9c03631ae6d5411eeeea0532bca3c99dc3b45cb033",
+    "verification/package.json": "87bc3c3b43342c01e41a539d20557530b2aeb7cdfcf0655f27fa6d5bef3a337f",
+    "verification/test-results-optiboot.json": "b7d1d218ac1484540fe50a9fe91af76f26f9f2d1fcbbc965241ac488494e1a2e",
+    "verification/test-results.json": "bee827764527b1ee9c04ce5951e9af313215948b18ede6b3e2a60319bba51f7e"
   }
 }
 
