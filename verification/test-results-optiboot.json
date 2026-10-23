@@ -1,7 +1,7 @@
 {
-  "firmware": "1.3",
+  "firmware": "1.4",
   "simulator": "avr8js 0.21.0",
-  "hexSha256": "6077bb4fdd148fd6173527ba6eee2b19ca72d9e9afd009bd62b4d96fffcae937",
+  "hexSha256": "a8bcc54fc3f763c8fb02b21f3283fd3941291b8507d399c8f9d6f3564eb27cee",
   "tests": [
     {
       "test": "blank EEPROM: self-test, READY/OFF, green LED",
@@ -44,7 +44,7 @@
       "status": "PASS"
     },
     {
-      "test": "brownout does not clear FAULT",
+      "test": "stored FAULT has priority over a later brownout",
       "status": "PASS"
     },
     {
@@ -393,6 +393,78 @@
     },
     {
       "test": "watchdog interrupts a stuck running loop, next startup is FAULT",
+      "status": "PASS"
+    },
+    {
+      "test": "built-in L: short READY pulse, dark interval, then next READY pulse",
+      "status": "PASS"
+    },
+    {
+      "test": "built-in L stays ON for BOOST, HOLD and hot ON with zero heater PWM",
+      "status": "PASS"
+    },
+    {
+      "test": "L displays 1 flashes, dark pause and repeats; reason survives power-on",
+      "status": "PASS"
+    },
+    {
+      "test": "L displays 2 flashes, dark pause and repeats; reason survives power-on",
+      "status": "PASS"
+    },
+    {
+      "test": "L displays 3 flashes, dark pause and repeats; reason survives power-on",
+      "status": "PASS"
+    },
+    {
+      "test": "L displays 4 flashes, dark pause and repeats; reason survives power-on",
+      "status": "PASS"
+    },
+    {
+      "test": "L displays 5 flashes, dark pause and repeats; reason survives power-on",
+      "status": "PASS"
+    },
+    {
+      "test": "L displays 6 flashes, dark pause and repeats; reason survives power-on",
+      "status": "PASS"
+    },
+    {
+      "test": "L displays 7 flashes, dark pause and repeats; reason survives power-on",
+      "status": "PASS"
+    },
+    {
+      "test": "L displays 8 flashes, dark pause and repeats; reason survives power-on",
+      "status": "PASS"
+    },
+    {
+      "test": "L displays 9 flashes, dark pause and repeats; reason survives power-on",
+      "status": "PASS"
+    },
+    {
+      "test": "L displays 10 flashes, dark pause and repeats; reason survives power-on",
+      "status": "PASS"
+    },
+    {
+      "test": "newly detected NTC fault persists with reason, even across watchdog reset",
+      "status": "PASS"
+    },
+    {
+      "test": "brownout on saved ON is diagnosed separately",
+      "status": "PASS"
+    },
+    {
+      "test": "invalid or absent stored reason stays FAULT with code 1",
+      "status": "PASS"
+    },
+    {
+      "test": "manual retry replaces old unknown reason, repeated same failure does not rewrite EEPROM",
+      "status": "PASS"
+    },
+    {
+      "test": "each interrupted reason/state EEPROM transaction stays locked after restart",
+      "status": "PASS"
+    },
+    {
+      "test": "L error series handles millis rollover without changing state or energizing heater",
       "status": "PASS"
     }
   ]

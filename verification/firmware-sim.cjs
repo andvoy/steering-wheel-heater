@@ -7,8 +7,8 @@ const {execFileSync} = require('node:child_process');
 const {createHash} = require('node:crypto');
 const avr = require('avr8js');
 
-const build = path.resolve(process.argv[2] || 'tmp/firmware-1.3');
-const name = 'steering_wheel_heater_v1_3.ino';
+const build = path.resolve(process.argv[2] || 'tmp/firmware-1.4');
+const name = 'steering_wheel_heater_v1_4.ino';
 const avrBin = process.env.AVR_BIN;
 assert.ok(avrBin, 'Set AVR_BIN to the bin directory of the AVR toolchain used for compilation.');
 const symbols = {};
@@ -25,7 +25,8 @@ for (const line of fs.readFileSync(path.join(build,name+'.hex'),'utf8').trim().s
 }
 const saved = state => Uint8Array.from([0xB1,state,state^255]);
 const OFF=0, BOOST=1, HOLD=2, FAULT=3;
-const F={Sensor:1,Overheat:2,Supply:3,Q1:4,Q2:5,Conduction:6,Watchdog:7,Brownout:8,Stored:9,Eeprom:10};
+const F={Stored:1,Overheat:2,Supply:3,Sensor:4,Q1:5,Q2:6,Conduction:7,Watchdog:8,Brownout:9,Eeprom:10};
+const savedFault = code => Uint8Array.from([0xB1,0x5A,0xA5,code,code^255]);
 const SUPPLY_HIGH_ADC=374; // 42 V through 220k/10k divider at 5 V ADC reference.
 const ntcAdc = resistance => Math.round(1023*resistance/(10000+resistance));
 const WD_RESET = Symbol('watchdog reset');
@@ -83,6 +84,7 @@ class Sim {
   get fault() {return this.byte('faultCode');}
   get pwm() {return this.cpu.data[0x80]&0x80 ? this.cpu.data[0x88] : this.cpu.data[0x25]&2 ? 255 : 0;}
   get enabled() {return !!(this.cpu.data[0x25]&1);}
+  get boardLed() {return this.portB.pinState(5)===avr.PinState.High;}
   press() {this.portD.setPin(2,false);return this.run(60);}
   release() {this.portD.setPin(2,true);return this.run(60);}
   jump(ms) {this.u32('timer0_millis',this.u32('timer0_millis')+ms);return this.run(80);}
@@ -108,7 +110,7 @@ if(process.env.OPTIBOOT_TEST==='1') {
   test('Optiboot r2 power-on flag is captured before C initialization',()=>{const s=new Sim({reset:0,bootFlags:1}).run(100);assert.equal(s.mode,OFF);s.safe();});
   test('Optiboot r2 watchdog flag is not mistaken for power-on',()=>new Sim({reset:0,bootFlags:8,eeprom:saved(0xC3)}).run(100).expectFault(F.Watchdog));
 }
-test('brownout does not clear FAULT',()=>new Sim({reset:4,eeprom:saved(0x5A)}).run(100).expectFault(F.Brownout));
+test('stored FAULT has priority over a later brownout',()=>new Sim({reset:4,eeprom:saved(0x5A)}).run(100).expectFault(F.Stored));
 test('watchdog reset is latched even with stored ON',()=>new Sim({reset:8,eeprom:saved(0xC3)}).run(100).expectFault(F.Watchdog));
 test('stored FAULT survives external Reset',()=>new Sim({reset:2,eeprom:saved(0x5A)}).run(100).expectFault(F.Stored));
 test('power-on does not clear stored FAULT or pulse heater',()=>{const s=new Sim({eeprom:saved(0x5A)}).run(100);s.expectFault(F.Stored);assert.equal(s.loadPulses,0);});
@@ -157,12 +159,16 @@ for(const [name,options] of [
   ['Q1 open',{q1Open:true}],['Q2 open',{q2Open:true}],['sense low',{sense:0}],['sense high',{sense:SUPPLY_HIGH_ADC}]
 ]) test(`long hold cannot clear persistent ${name}`,()=>{
   const s=new Sim({...options,eeprom:saved(0x5A)}).run(100);const writes=s.writes.length;
-  s.press().jump(5100);s.expectFault(F.Stored);assert.equal(s.writes.length,writes);
+  const code=options.ntc!==undefined||options.temp===140 ? F.Sensor : options.temp===50 ? F.Overheat :
+    options.temp===40 ? F.Overheat : options.q1Short ? F.Q1 : options.q2Short ? F.Q2 :
+    options.q1Open||options.q2Open||options.sense===SUPPLY_HIGH_ADC ? F.Conduction : F.Supply;
+  s.press().jump(5100);s.expectFault(code);
+  if(code===F.Stored)assert.equal(s.writes.length,writes);
   if(options.temp>=39.9||options.ntc!==undefined)assert.equal(s.loadPulses,0);
 });
 test('failed long hold is one-shot, repairing needs release and a new 5-second hold',()=>{
-  const s=new Sim({q1Short:true,eeprom:saved(0x5A)}).run(100).press().jump(5100);s.expectFault(F.Stored);
-  s.q1Short=false;s.jump(6000);s.expectFault(F.Stored);s.release().press().jump(5100);assert.equal(s.mode,OFF);s.safe();
+  const s=new Sim({q1Short:true,eeprom:saved(0x5A)}).run(100).press().jump(5100);s.expectFault(F.Q1);
+  s.q1Short=false;s.jump(6000);s.expectFault(F.Q1);s.release().press().jump(5100);assert.equal(s.mode,OFF);s.safe();
 });
 test('5-second hold survives millis rollover',()=>{
   const s=new Sim({eeprom:saved(0x5A)}).run(100);s.u32('timer0_millis',0xfffffff0);s.u32('lastControlAt',0xfffffff0);s.u32('buttonChangedAt',0xfffffff0);
@@ -230,7 +236,7 @@ test('warm requested ON remains below emergency threshold; emergency still latch
 });
 test('documented power-sequencing limitation: loss of 42 V with Nano alive latches FAULT',()=>{
   const s=new Sim({eeprom:saved(0xC3)}).run(330);s.supply=false;s.run(300);s.expectFault(F.Supply);
-  new Sim({reset:0,eeprom:s.eeprom.memory}).run(100).expectFault(F.Stored);
+  new Sim({reset:0,eeprom:s.eeprom.memory}).run(100).expectFault(F.Supply);
 });
 test('36.4 C transition to HOLD and power clamp <=180',()=>{
   const s=new Sim({eeprom:saved(0xC3)}).run(330);s.temp=37;s.run(300);assert.equal(s.mode,HOLD);assert.ok(s.pwm<=180);
@@ -269,5 +275,51 @@ test('watchdog interrupts a stuck running loop, next startup is FAULT',()=>{
   assert.throws(()=>s.run(1500),e=>e===WD_RESET);assert.ok((s.resetAt-start)/16000<1350);
   new Sim({reset:8,eeprom:s.eeprom.memory}).run(100).expectFault(F.Watchdog);
 });
+test('built-in L: short READY pulse, dark interval, then next READY pulse',()=>{
+  const s=new Sim().run(200);assert.equal(s.mode,OFF);assert.equal(s.boardLed,false);
+  s.u32('timer0_millis',2020);s.u32('lastControlAt',2020);s.run(5);assert.equal(s.boardLed,true);
+  s.run(100);assert.equal(s.boardLed,false);s.safe();
+});
+test('built-in L stays ON for BOOST, HOLD and hot ON with zero heater PWM',()=>{
+  const s=new Sim({eeprom:saved(0xC3)}).run(330);assert.equal(s.boardLed,true);
+  s.temp=37;s.run(400);assert.equal(s.mode,HOLD);assert.equal(s.pwm,0);assert.equal(s.boardLed,true);
+  const hot=new Sim({temp:41,eeprom:saved(0xC3)}).run(300);hot.safe();assert.equal(hot.boardLed,true);
+});
+for(const code of Object.values(F)) test(`L displays ${code} flashes, dark pause and repeats; reason survives power-on`,()=>{
+  const s=new Sim({eeprom:savedFault(code)}).run(100);s.expectFault(code);
+  const period=code*300+1800;
+  s.u32('timer0_millis',s.u32('faultLedStartedAt')+period-30);s.run(5);
+  let rising=0,last=s.boardLed;
+  for(let t=0;t<period;t+=10){s.run(10);const on=s.boardLed;if(on&&!last)rising++;last=on;}
+  assert.equal(rising,code);s.safe();
+  s.u32('timer0_millis',s.u32('faultLedStartedAt')+code*300+600);s.run(5);assert.equal(s.boardLed,false);
+});
+test('newly detected NTC fault persists with reason, even across watchdog reset',()=>{
+  const s=new Sim({ntc:1023}).run(100);s.expectFault(F.Sensor);
+  assert.deepEqual(s.eeprom.memory.slice(0,5),savedFault(F.Sensor));
+  new Sim({reset:8,eeprom:s.eeprom.memory}).run(100).expectFault(F.Sensor);
+});
+test('brownout on saved ON is diagnosed separately',()=>new Sim({reset:4,eeprom:saved(0xC3)}).run(100).expectFault(F.Brownout));
+test('invalid or absent stored reason stays FAULT with code 1',()=>{
+  for(const bytes of [[0xB1,0x5A,0xA5,4,4],[0xB1,0x5A,0xA5,0,255],[0xB1,0x5A,0xA5,11,244]])
+    new Sim({eeprom:Uint8Array.from(bytes)}).run(100).expectFault(F.Stored);
+});
+test('manual retry replaces old unknown reason, repeated same failure does not rewrite EEPROM',()=>{
+  const s=new Sim({supply:false,eeprom:saved(0x5A)}).run(100).press().jump(5100);s.expectFault(F.Supply);
+  const writes=s.writes.length;s.release().press().jump(5100);s.expectFault(F.Supply);assert.equal(s.writes.length,writes);
+  s.supply=true;s.release().press().jump(5100);assert.equal(s.mode,OFF);s.safe();assert.equal(s.fault,0);
+  assert.deepEqual(s.eeprom.memory.slice(3,5),Uint8Array.from([0,255]));
+});
+test('each interrupted reason/state EEPROM transaction stays locked after restart',()=>{
+  const s=new Sim({ntc:1023}).run(100);s.expectFault(F.Sensor);
+  const transactions=s.writes.filter(m=>m[0]!==0xB1);
+  assert.ok(transactions.length>0);
+  for(const memory of transactions)new Sim({eeprom:memory}).run(100).expectFault(F.Eeprom);
+});
+test('L error series handles millis rollover without changing state or energizing heater',()=>{
+  const s=new Sim({eeprom:savedFault(F.Sensor)}).run(100);
+  s.u32('faultLedStartedAt',0xfffffff0);s.u32('timer0_millis',0xfffffff5);s.u32('lastControlAt',0xfffffff5);
+  s.run(5);assert.equal(s.boardLed,true);s.run(150);assert.equal(s.boardLed,false);s.expectFault(F.Sensor);
+});
 console.log(`\n${results.length} tests passed. Model excludes analog transients, bootloader, physical temperature and real wiring.`);
-if(process.env.REPORT_PATH)fs.writeFileSync(process.env.REPORT_PATH,JSON.stringify({firmware:'1.3',simulator:'avr8js 0.21.0',hexSha256:createHash('sha256').update(fs.readFileSync(path.join(build,name+'.hex'))).digest('hex'),tests:results},null,2)+'\n');
+if(process.env.REPORT_PATH)fs.writeFileSync(process.env.REPORT_PATH,JSON.stringify({firmware:'1.4',simulator:'avr8js 0.21.0',hexSha256:createHash('sha256').update(fs.readFileSync(path.join(build,name+'.hex'))).digest('hex'),tests:results},null,2)+'\n');
