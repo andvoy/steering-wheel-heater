@@ -40,7 +40,19 @@ The two-colour LED uses a common cathode connected to GND. Each colour has a ser
 
 **C1: 104 = 100 nF. C2: 103 = 10 nF.** Both capacitors are non-polarized.
 
-Power the Nano with regulated 5 V at 5V, or 7–12 V at VIN. The current build uses a separate converter set to 10 V connected to VIN. The sensor and indicators use the Nano 5V rail. Logic and power grounds are common; heater current has its own return conductor.
+Power the Nano through VIN using a separate 42-to-10 V converter: +10 V to J1.1, GND to J1.2. In this build the Nano 5V pin supplies the NTC divider; the external converter is connected to VIN. Logic and power grounds are common; heater current has its own return conductor.
+
+[Schematic and perfboard wiring](docs/steering-wheel-heater-1.9-wiring.pdf). Component-side J1 orientation: GND on the left, +10 V on the right. The orange J1 wire goes to VIN; a separate jumper from Nano 5V supplies R1.
+
+### Supply and capacitors
+
+- C1: 100 nF (104); C2: 10 nF (103), both non-polarized. Installing 100 nF at C2 increases A1 settling time and can cause a false self-test fault that blocks heating.
+- The assembled prototype reset during PWM when powered by its external 5 V converter. Operation became stable after changing the supply to 10 V at VIN. This is the supply arrangement documented here.
+- Select the 42 V boost converter for continuous output power with thermal headroom and adequate cooling. The cold load at full output is 42² / 19.47 ≈ 90.6 W and 42 / 19.47 ≈ 2.16 A. Check the converter's rating against its cooling conditions and allowed input current.
+
+Converter used by the author: [Ozon listing](https://ozon.ru/t/EIjlFE6). Check the product documentation for its specifications.
+
+Arduino Nano: [Ozon listing](https://ozon.ru/t/zLZbkiN). Tungsten wire: [Ozon listing](https://ozon.ru/t/hiCkYJc).
 
 ## Operation
 

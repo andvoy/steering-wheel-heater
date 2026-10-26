@@ -1,0 +1,179 @@
+<!doctype html><html lang="ru"><meta charset="utf-8">
+<title>Модуль подогрева 1.9 - схема и монтаж</title><style>@page{size:A3 landscape;margin:0}*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;color:#101828}
+.page{width:420mm;height:297mm;padding:10mm 11mm;page-break-after:always;overflow:hidden}
+.page:last-child{page-break-after:auto}h1{font-size:23pt;margin:0 0 2mm}
+.sub{font-size:11pt;color:#475467;margin-bottom:5mm}
+#schematic{width:100%;height:145mm;display:block}#boardpage{width:100%;height:100%}
+.notes{display:grid;grid-template-columns:1fr 1fr;gap:10mm;font-size:11pt;line-height:1.5}
+h2{font-size:14pt;margin:3mm 0}p{margin:2mm 0}</style>
+<section class="page"><h1>Модуль подогрева 1.9</h1>
+<div class="sub">Принципиальная схема. Питание нагревателя 42 В, питание Nano 10 В через VIN. Лист 1/2</div>
+<svg id="schematic" viewBox="0 0 2200 720"></svg>
+<div class="notes"><div><h2>Питание</h2>
+<p>Внешний преобразователь 42->10 В подключается к J1: контакт 1 (+10 В) на VIN Nano, контакт 2 на GND.</p>
+<p>Контакт 5V Nano питает R1 и измерительную цепь NTC. Все GND объединены. Силовой ток возвращается отдельным проводом.</p>
+<p>Повышающий преобразователь на 42 В должен выдерживать длительную нагрузку с запасом и иметь охлаждение. Холодная обмотка: около 90,6 Вт и 2,16 А.</p>
+</div><div><h2>Соединения и номиналы</h2>
+<p>C1: 100 нФ (104), C2: 10 нФ (103), оба неполярные. Перестановка конденсаторов может вызвать ложную ошибку самотеста.</p>
+<p>Q1 регулирует мощность; Q2 отключает силовую цепь при обнаруженной неисправности Q1. D9 управляет Q1, D8 управляет Q2.</p>
+<p>J3: датчик NTC; J4: кнопка; J5: двухцветный LED с общим катодом. R8 и R9 расположены во внешней цепи светодиода.</p>
+<p>Алгоритм, настройки и спецификация приведены в README.md комплекта 1.9.</p>
+</div></div></section>
+<section class="page"><svg id="boardpage" viewBox="0 0 2400 1600"></svg></section>
+<script>
+const NS="http://www.w3.org/2000/svg",COLS=17,ROWS=10,P=44,OX=105,OY=285,BW=(COLS-1)*P,BH=(ROWS-1)*P;
+const C={ink:"#101828",muted:"#475467",faint:"#98a2b3",board:"#eef7e8",edge:"#39712f",pad:"#d7a33f",hole:"#fff",power:"#c92a1d",high:"#202939",signal:"#175cd3",analog:"#7a5af8",ground:"#14804a",jump:"#f79009",module:"#eef4ff",green:"#16a34a",red:"#dc2626"};
+const gx=c=>OX+c*P,gy=r=>OY+r*P,mx=c=>gx(COLS-1-c);function E(t,a={},p){const e=document.createElementNS(NS,t);for(const[k,v]of Object.entries(a))e.setAttribute(k,v);if(p)p.appendChild(e);return e}function T(p,x,y,s,z=22,w=400,f=C.ink,a="start",tr=""){const e=E("text",{x,y,"font-size":z,"font-weight":w,fill:f,"text-anchor":a,transform:tr},p);e.textContent=s;return e}function L(p,x1,y1,x2,y2,s=C.ink,w=3,d=""){return E("line",{x1,y1,x2,y2,stroke:s,"stroke-width":w,"stroke-linecap":"round","stroke-dasharray":d},p)}function R(p,x,y,w,h,f="#fff",s=C.ink,sw=3,rx=8){return E("rect",{x,y,width:w,height:h,fill:f,stroke:s,"stroke-width":sw,rx},p)}function PL(p,pts,s,w=6,d="",op=1){return E("polyline",{points:pts.map(q=>q.join(",")).join(" "),fill:"none",stroke:s,"stroke-width":w,"stroke-linecap":"round","stroke-linejoin":"round","stroke-dasharray":d,opacity:op},p)}
+function schText(p,x,y,s,z=18,w=500,a="start",f=C.ink){return T(p,x,y,s,z,w,f,a)}
+function schWire(p,x1,y1,x2,y2){return L(p,x1,y1,x2,y2,C.ink,3)}
+function schNode(p,x,y){return E("circle",{cx:x,cy:y,r:5.5,fill:C.ink},p)}
+function schTerminal(p,x,y,label,side="left"){
+  E("circle",{cx:x,cy:y,r:5,fill:"#fff",stroke:C.ink,"stroke-width":3},p);
+  schText(p,x+(side==="left"?-14:14),y+6,label,18,700,side==="left"?"end":"start");
+}
+function schGnd(p,x,y){
+  p=E("g",{"data-ground":"true","data-x":x,"data-y":y},p);
+  schWire(p,x,y,x,y+14);L(p,x-20,y+14,x+20,y+14,C.ink,3);L(p,x-13,y+22,x+13,y+22,C.ink,3);L(p,x-6,y+30,x+6,y+30,C.ink,3);
+}
+function schResH(p,x1,y,x2,ref,val){
+  const cx=(x1+x2)/2,bw=86,bh=28;schWire(p,x1,y,cx-bw/2,y);R(p,cx-bw/2,y-bh/2,bw,bh,"#fff",C.ink,3,0);schWire(p,cx+bw/2,y,x2,y);
+  schText(p,cx,y-28,ref,17,700,"middle");schText(p,cx,y+39,val,16,500,"middle",C.muted);
+}
+function schResV(p,x,y1,y2,ref,val,side="right"){
+  const cy=(y1+y2)/2,bw=28,bh=74;schWire(p,x,y1,x,cy-bh/2);R(p,x-bw/2,cy-bh/2,bw,bh,"#fff",C.ink,3,0);schWire(p,x,cy+bh/2,x,y2);
+  const tx=x+(side==="right"?28:-28),anc=side==="right"?"start":"end";schText(p,tx,cy-7,ref,17,700,anc);schText(p,tx,cy+17,val,16,500,anc,C.muted);
+}
+function schCapV(p,x,y1,y2,ref,val,side="right"){
+  const cy=(y1+y2)/2;schWire(p,x,y1,x,cy-10);L(p,x-24,cy-10,x+24,cy-10,C.ink,3);L(p,x-24,cy+10,x+24,cy+10,C.ink,3);schWire(p,x,cy+10,x,y2);
+  const tx=x+(side==="right"?34:-34),anc=side==="right"?"start":"end";schText(p,tx,cy-5,ref,17,700,anc);schText(p,tx,cy+19,val,16,500,anc,C.muted);
+}
+function schNtcV(p,x,y1,y2,ref,val){
+  schResV(p,x,y1,y2,ref,val,"right");const cy=(y1+y2)/2;L(p,x-28,cy+45,x+25,cy-45,C.ink,2.5);L(p,x+13,cy-42,x+25,cy-45,C.ink,2.5);L(p,x+25,cy-45,x+23,cy-33,C.ink,2.5);
+}
+function schMosN(p,x,y,ref,val,gateSide="right"){
+  const cx=x+38,channelX=cx+14,gateX=cx+43,gateTerminal=cx+112,diodeX=cx-34;
+  E("circle",{cx,cy:y,r:71,fill:"#fff",stroke:C.ink,"stroke-width":3},p);
+  schWire(p,x,y-92,x,y-30);schWire(p,x,y+30,x,y+92);
+  L(p,x,y-30,channelX,y-30,C.ink,3);L(p,x,y+30,channelX,y+30,C.ink,3);
+  L(p,channelX,y-39,channelX,y-21,C.ink,3);L(p,channelX,y-9,channelX,y+9,C.ink,3);L(p,channelX,y+21,channelX,y+39,C.ink,3);
+  L(p,gateX,y-42,gateX,y+42,C.ink,3);schWire(p,gateTerminal,y,gateX,y);
+  L(p,diodeX+8,y,channelX,y,C.ink,2.5);E("polygon",{points:`${channelX-3},${y} ${channelX-16},${y-8} ${channelX-16},${y+8}`,fill:C.ink},p);
+  L(p,diodeX,y-30,diodeX,y-20,C.ink,2.5);L(p,diodeX-13,y-20,diodeX+13,y-20,C.ink,2.5);
+  E("polygon",{points:`${diodeX-13},${y+12} ${diodeX+13},${y+12} ${diodeX},${y-17}`,fill:"#fff",stroke:C.ink,"stroke-width":2.5},p);L(p,diodeX,y+12,diodeX,y+30,C.ink,2.5);
+  schText(p,x-11,y-75,"D",15,700,"middle");schText(p,x-11,y+86,"S",15,700,"middle");schText(p,gateTerminal+8,y-12,"G",15,700,"start");
+  schText(p,x-46,y-8,ref,18,700,"end");schText(p,x-46,y+17,val,15,500,"end",C.muted);
+}
+function schSwitchH(p,x1,y,x2,ref,val){
+  const a=x1+42,b=x2-42;schWire(p,x1,y,a,y);schWire(p,b,y,x2,y);E("circle",{cx:a,cy:y,r:5,fill:"#fff",stroke:C.ink,"stroke-width":3},p);E("circle",{cx:b,cy:y,r:5,fill:"#fff",stroke:C.ink,"stroke-width":3},p);L(p,a+3,y-3,b-9,y-31,C.ink,3);schText(p,(x1+x2)/2,y-29,ref,17,700,"middle");schText(p,(x1+x2)/2,y+31,val,15,500,"middle",C.muted);
+}
+function schLedH(p,x1,y,x2,ref,color){
+  const cx=(x1+x2)/2;schWire(p,x1,y,cx-28,y);E("polygon",{points:`${cx-28},${y-24} ${cx-28},${y+24} ${cx+12},${y}`,fill:"#fff",stroke:C.ink,"stroke-width":3},p);L(p,cx+12,y-26,cx+12,y+26,C.ink,3);schWire(p,cx+12,y,x2,y);L(p,cx-2,y-31,cx+22,y-50,color,2.5);L(p,cx+10,y-29,cx+34,y-48,color,2.5);schText(p,cx,y-58,ref,17,700,"middle");
+}
+function drawSchematic(){
+  const p=document.getElementById("schematic");
+  const style=E("style",{},p);style.textContent="text{font-family:'DejaVu Sans',Arial,sans-serif} line,rect,polyline,polygon,circle{vector-effect:non-scaling-stroke}";
+  const boardZone=R(p,620,40,1195,610,"#f7faff",C.signal,2,9);boardZone.setAttribute("stroke-dasharray","12 8");boardZone.setAttribute("data-board-boundary","true");
+  schText(p,28,31,"ВНЕ ПЛАТЫ · СИЛОВАЯ ЦЕПЬ 42 В",18,700);
+  schText(p,1217.5,63,"Модуль подогрева",17,700,"middle",C.signal);
+  E("circle",{cx:55,cy:80,r:5,fill:"#fff",stroke:C.ink,"stroke-width":3},p);schText(p,28,57,"+42 В · ВНЕШНЕЕ",17,700,"start");schWire(p,60,80,130,80);
+  schResH(p,130,80,625,"W1","вольфрам Ø0,204 мм · 19,47 Ом при 21 °C · около 10 м");
+  schWire(p,625,80,645,80);E("circle",{cx:650,cy:80,r:6,fill:"#fff",stroke:C.ink,"stroke-width":3},p);schWire(p,655,80,980,80);schText(p,670,65,"J2 · HEAT-",16,700,"start",C.ink);
+  schMosN(p,980,172,"Q1","IRL540N", "right");schWire(p,980,264,980,338);schMosN(p,980,430,"Q2","IRL540N", "right");schGnd(p,980,522);
+
+  schWire(p,1130,172,1160,172);schNode(p,1160,172);schResH(p,1160,172,1380,"R2","220 Ом");schWire(p,1380,172,1410,172);E("circle",{cx:1410,cy:172,r:5,fill:"#fff",stroke:C.ink,"stroke-width":3},p);schText(p,1410,151,"D9 · PWM",17,700,"middle");
+  schResV(p,1160,172,286,"R3","10 кОм");schGnd(p,1160,286);
+  schWire(p,1130,430,1160,430);schNode(p,1160,430);schResH(p,1160,430,1380,"R4","220 Ом");schWire(p,1380,430,1410,430);E("circle",{cx:1410,cy:430,r:5,fill:"#fff",stroke:C.ink,"stroke-width":3},p);schText(p,1410,409,"D8 · ENABLE",17,700,"middle");
+  schResV(p,1160,430,544,"R5","10 кОм");schGnd(p,1160,544);
+
+  schNode(p,765,80);schWire(p,765,80,765,150);schResV(p,765,150,270,"R6","220 кОм · 1%","left");
+  schWire(p,765,270,765,310);schNode(p,765,310);schTerminal(p,700,310,"A1","left");schWire(p,705,310,765,310);
+  schResV(p,765,310,448,"R7","10 кОм · 1%","left");schGnd(p,765,448);
+  schWire(p,765,310,860,310);schCapV(p,860,310,448,"C2","10 нФ","left");schGnd(p,860,448);
+
+  schTerminal(p,1540,72,"+5 V","left");schWire(p,1540,77,1540,102);schResV(p,1540,102,214,"R1","10 кОм · 1%","right");
+  schWire(p,1540,214,1540,250);schNode(p,1540,250);schTerminal(p,1480,250,"A0","left");schWire(p,1485,250,1540,250);
+  schCapV(p,1540,250,350,"C1","100 нФ","right");schGnd(p,1540,350);
+  schWire(p,1540,250,1680,250);schWire(p,1680,250,1680,525);schWire(p,1680,525,1795,525);
+  schTerminal(p,1800,525,"","left");schText(p,1786,507,"J3.1 A0",17,700,"end");
+  schTerminal(p,1800,590,"","left");schText(p,1786,572,"J3.2 GND",17,700,"end");
+  schWire(p,1795,590,1750,590);schGnd(p,1750,590);
+  schWire(p,1805,525,2050,525);
+  schWire(p,1805,590,1980,590);schWire(p,1980,590,1980,650);schWire(p,1980,650,2050,650);
+  schNtcV(p,2050,525,650,"TH1","10 кОм · B3977");schText(p,2050,490,"ВНЕ ПЛАТЫ · ДАТЧИК",15,700,"middle",C.power);
+
+  schText(p,1990,31,"ВНЕ ПЛАТЫ · КНОПКА И LED",18,700,"middle");
+  schTerminal(p,1800,92,"","left");schText(p,1786,74,"J4.2 D2",17,700,"end");schSwitchH(p,1805,92,1990,"SW1","NO");
+  schWire(p,1990,92,1990,150);schWire(p,1990,150,1805,150);
+  schTerminal(p,1800,150,"","left");schText(p,1786,132,"J4.1 GND",17,700,"end");schWire(p,1795,150,1750,150);schGnd(p,1750,150);
+  schTerminal(p,1800,250,"","left");schText(p,1786,232,"J5.2 D5",17,700,"end");schResH(p,1805,250,1940,"R8","1 кОм");schLedH(p,1940,250,2030,"LED1-G",C.green);
+  schTerminal(p,1800,365,"","left");schText(p,1786,347,"J5.3 D6",17,700,"end");schResH(p,1805,365,1940,"R9","1 кОм");schLedH(p,1940,365,2030,"LED1-R",C.red);
+  schWire(p,2030,250,2100,250);schWire(p,2030,365,2100,365);schWire(p,2100,250,2100,415);schNode(p,2100,365);
+  schWire(p,2100,415,1805,415);schTerminal(p,1800,415,"","left");schText(p,1786,397,"J5.1 GND",17,700,"end");schWire(p,1795,415,1750,415);schGnd(p,1750,415);
+
+  R(p,1370,470,270,130,"none",C.ink,3,0);schText(p,1505,515,"A1 · Arduino Nano V3",18,700,"middle");schText(p,1505,547,"VIN / GND",17,500,"middle");
+  schText(p,1430,582,"J1.1 +10 V",16,700,"middle");schWire(p,1430,600,1430,630);schTerminal(p,1430,635,"","left");
+  schText(p,1580,582,"J1.2 GND",16,700,"middle");schWire(p,1580,600,1580,630);schTerminal(p,1580,635,"","left");
+  schText(p,35,687,"Пунктирная синяя рамка - граница макетной платы. Всё вне рамки - внешняя проводка и элементы.",16,500,"start",C.muted);
+}
+function head(p,title,sub,n,total){T(p,75,66,title,42,700);T(p,75,108,sub,23,400,C.muted);L(p,75,135,2325,135,"#d0d5dd",3);T(p,2325,68,`Лист ${n}/${total}`,21,600,C.muted,"end")}function foot(p,n,total){R(p,75,1510,2250,55,"#f8fafc","#667085",2,0);T(p,100,1546,"SW-H42-PB-08",19,700,C.muted);T(p,430,1546,"изолированные площадки · шаг 2,54 мм · стороны указаны над видами платы",19,400,C.muted);T(p,1550,1546,"~40,6 x 22,9 мм",19,600,C.muted);T(p,2295,1546,`Лист ${n}/${total}`,19,700,C.muted,"end")}
+const HOLE_R=3.1,PAD_R=7,PAD_BORDER=1.5;
+function board(p,mir=false){R(p,OX-17,OY-17,BW+34,BH+34,C.board,C.edge,4,6);for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const x=mir?mx(c):gx(c);E("circle",{cx:x,cy:gy(r),r:PAD_R,fill:C.pad,stroke:"#966f27","stroke-width":PAD_BORDER},p);E("circle",{cx:x,cy:gy(r),r:HOLE_R,fill:C.hole},p)}for(let c=0;c<COLS;c+=2)T(p,mir?mx(c):gx(c),OY-29,String(c+1),13,600,C.muted,"middle");for(let r=0;r<ROWS;r+=2)T(p,OX-29,gy(r)+5,String(r+1),13,600,C.muted,"middle");L(p,OX,OY+BH+65,OX+BW,OY+BH+65,C.muted,2);T(p,OX+BW/2,OY+BH+95,"17 x 10 отверстий · шаг 2,54 мм · плата ~40,6 x 22,9 мм",16,500,C.muted,"middle")}
+function conn(p,pads,ref,labs,mir=false){const xs=pads.map(q=>mir?mx(q[0]):gx(q[0])),ys=pads.map(q=>gy(q[1])),rows=pads.map(q=>q[1]),x1=Math.min(...xs)-16,x2=Math.max(...xs)+16,y1=Math.min(...ys)-16,y2=Math.max(...ys)+16;R(p,x1,y1,x2-x1,y2-y1,"#fff",C.ink,3,4);pads.forEach((q,i)=>{const x=mir?mx(q[0]):gx(q[0]),y=gy(q[1]);E("circle",{cx:x,cy:y,r:10,fill:"#fff",stroke:C.ink,"stroke-width":3},p);if(!mir)T(p,x,y+3,labs[i],8,700,C.ink,"middle")});if(ref){const top=rows.every(r=>r===0),bottom=rows.every(r=>r===ROWS-1),labelY=top?OY-52:bottom?gy(ROWS-1)+43:y1-10;T(p,(x1+x2)/2,labelY,ref,14,700,C.ink,"middle")}}
+function part(p,c1,r1,c2,r2,ref,val,color=C.ink,mir=false){const x1=mir?mx(c1):gx(c1),y1=gy(r1),x2=mir?mx(c2):gx(c2),y2=gy(r2),h=Math.abs(x2-x1)>=Math.abs(y2-y1),cx=(x1+x2)/2,cy=(y1+y2)/2,w=h?98:31,hh=h?31:98;L(p,x1,y1,x2,y2,C.ink,3);R(p,cx-w/2,cy-hh/2,w,hh,"#fff",color,3,3);const rot=h?"":`rotate(90 ${cx} ${cy})`;T(p,cx,cy+4,`${ref} ${val}`,h?10:10,700,color,"middle",rot)}
+const AP=["VIN","GND","RST","5V","A7","A6","A5","A4","A3","A2","A1","A0","AREF","3V3","D13"],DP=["TX1","RX0","RST","GND","D2","D3","NC","D5","D6","D7","D8","D9","D10","D11","D12"],USE=new Set(["GND","VIN","5V","A0","A1","D2","D5","D6","D8","D9"]);
+function nano(p,mir=false,ghost=false){const a=mir?mx(14):gx(0),b=mir?mx(0):gx(14),x=Math.min(a,b)-19,w=Math.abs(b-a)+38,y1=gy(1),y2=gy(7);const z=R(p,x,y1-24,w,y2-y1+48,"none",C.signal,ghost?2:4,9);if(ghost)z.setAttribute("stroke-dasharray","8 7");const ux=mir?Math.max(a,b)+19:Math.min(a,b)-68;R(p,ux,(y1+y2)/2-28,50,56,ghost?"none":"#d0d5dd","#667085",3,4);for(let i=0;i<15;i++){const c=i,xx=mir?mx(c):gx(c),ca=USE.has(AP[i])?C.signal:C.faint,cd=USE.has(DP[i])?C.signal:C.faint;E("circle",{cx:xx,cy:y1,r:10.5,fill:"#fff",stroke:ca,"stroke-width":USE.has(AP[i])?3:1.4},p);E("circle",{cx:xx,cy:y2,r:10.5,fill:"#fff",stroke:cd,"stroke-width":USE.has(DP[i])?3:1.4},p);T(p,xx,y1+1.9,AP[i],AP[i].length>3?4.3:AP[i].length>2?4.9:6.2,700,ca,"middle");T(p,xx,y2+1.9,DP[i],DP[i].length>3?4.3:DP[i].length>2?4.9:6.2,700,cd,"middle")}}
+function nanoLinks(p){}
+function mosV(p,c,r,ref,face="right"){const x=gx(c),ys=[gy(r),gy(r+1),gy(r+2)],t=ys[0]-27,b=ys[2]+27;R(p,x-18,t,36,b-t,"#f2f4f7",C.ink,3,5);T(p,x,(ys[0]+ys[1])/2+4,ref,10,700,C.ink,"middle");["G","D","S"].forEach((s,i)=>{E("circle",{cx:x,cy:ys[i],r:10,fill:"#fff",stroke:C.ink,"stroke-width":2.5},p);T(p,x,ys[i]+3,s,8,700,C.ink,"middle")})}
+function mosH(p,c,r,ref,face="up"){const xs=[gx(c),gx(c+1),gx(c+2)],y=gy(r),l=xs[0]-27,rr=xs[2]+27;R(p,l,y-18,rr-l,36,"#f2f4f7",C.ink,3,5);T(p,(xs[0]+xs[1])/2,y+4,ref,10,700,C.ink,"middle");["G","D","S"].forEach((s,i)=>{E("circle",{cx:xs[i],cy:y,r:10,fill:"#fff",stroke:C.ink,"stroke-width":2.5},p);T(p,xs[i],y+3,s,8,700,C.ink,"middle")})}
+const topJ=[
+{n:"JP1 Nano 5V-R1",net:"+5",c:C.jump,p:[[3,1],[3,2]]},
+{n:"JP2 R7-C2 GND",net:"GND",c:C.ground,p:[[7,2],[7,3]]},
+{n:"JP3 C2-Nano GND",net:"GND",c:C.ground,p:[[7,3],[6.5,3],[6.5,6.5],[3,6.5],[3,7]]},
+{n:"JP4 J1-GND",net:"GND",c:C.ground,w:7,p:[[1,0],[1,1]],b:[[[1,1],[1,6],[1.5,6],[1.5,7.5],[1,7.5],[1,8]]]},
+{n:"JP5 R6-A1",net:"A1",c:C.analog,p:[[12,5],[11.5,5],[11.5,3.5],[10,3.5],[10,3],[10,2],[10,1]]},
+{n:"JP6 Q2 Gate",net:"Q2G",c:C.signal,p:[[15,6],[13,6],[13,9]]},
+{n:"JP7 D2",net:"D2",c:C.signal,p:[[4,7],[4,9]]},
+{n:"JP8 D5",net:"D5",c:C.signal,p:[[7,7],[7,8],[7,9]]},
+{n:"JP9 D6",net:"D6",c:C.signal,p:[[8,7],[8,9]]},
+{n:"JP10 D8",net:"D8",c:C.signal,p:[[10,7],[10,9]]},
+{n:"JP11 J2-R6",net:"Q1D",c:C.high,w:7,p:[[16,0],[12.5,0],[12.5,1.5],[12,1.5],[12,2]]}
+];
+function jumps(p){topJ.forEach(j=>{PL(p,j.p.map(q=>[gx(q[0]),gy(q[1])]),j.c,j.w||4.5,"",.96);(j.b||[]).forEach(x=>PL(p,x.map(q=>[gx(q[0]),gy(q[1])]),j.c,j.w||4.5,"",.96))})}
+const PASSIVE_PINS=[
+{q:[3,2],net:"+5"},{q:[3,5],net:"A0"},
+{q:[2,2],net:"GND"},{q:[2,5],net:"A0"},
+{q:[7,2],net:"GND"},{q:[10,2],net:"A1"},
+{q:[7,3],net:"GND"},{q:[10,3],net:"A1"},
+{q:[12,2],net:"Q1D"},{q:[12,5],net:"A1"},
+{q:[13,2],net:"Q1G"},{q:[13,5],net:"D9"},
+{q:[14,2],net:"Q1G"},{q:[14,5],net:"GND"},
+{q:[10,9],net:"D8"},{q:[13,9],net:"Q2G"},{q:[16,9],net:"GND"}
+];
+function markers(p,list,mir=false){function touches(path,q){return path.some((b,i)=>{if(!i)return false;const a=path[i-1],e=1e-9;return Math.abs((b[0]-a[0])*(q[1]-a[1])-(b[1]-a[1])*(q[0]-a[0]))<e&&q[0]>=Math.min(a[0],b[0])-e&&q[0]<=Math.max(a[0],b[0])+e&&q[1]>=Math.min(a[1],b[1])-e&&q[1]<=Math.max(a[1],b[1])+e})}PASSIVE_PINS.forEach(pin=>{const wire=list.find(j=>j.net===pin.net&&[j.p,...(j.b||[])].some(path=>touches(path,pin.q)));if(wire)E("circle",{cx:mir?mx(pin.q[0]):gx(pin.q[0]),cy:gy(pin.q[1]),r:PAD_R+PAD_BORDER/2,fill:wire.c,stroke:"none","data-connection":"passive","data-hole":pin.q.join(",")},p)})}
+const routes=[
+{n:"J1 +10V-VIN",net:"VIN",c:C.jump,w:5,p:[[3,0],[2.5,0],[2.5,.5],[0,.5],[0,1]]},
+{n:"HEAT-/Q1D",net:"Q1D",c:C.high,w:10,p:[[16,0],[16,3],[15,3]]},
+{n:"Q1S-Q2D",net:"SW",c:C.high,w:10,p:[[15,4],[15.55,4],[15.55,7],[15,7]]},
+{n:"GND bus",net:"GND",c:C.ground,w:9,p:[[1,8],[16,8]]},
+{n:"R5 ground",net:"GND",c:C.ground,w:5,p:[[16,9],[16,8]]},
+{n:"J3 GND",net:"GND",c:C.ground,w:5,p:[[1,9],[1,8]]},
+{n:"J4 GND",net:"GND",c:C.ground,w:5,p:[[3,9],[3,8]]},
+{n:"J5 K",net:"GND",c:C.ground,w:5,p:[[6,9],[6,8]]},
+{n:"C1 ground",net:"GND",c:C.ground,w:5,p:[[2,2],[1,2],[1,1]]},
+{n:"R3 ground",net:"GND",c:C.ground,w:5,p:[[14,5],[14,8]]},
+{n:"A1 node",net:"A1",c:C.analog,w:5,p:[[10,1],[10,3]]},
+{n:"A0 local",net:"A0",c:C.analog,w:5,p:[[2,5],[3,5]]},
+{n:"A0 to Nano",net:"A0",c:C.analog,w:5,p:[[3,5],[11,5],[11,1]]},
+{n:"J3 A0",net:"A0",c:C.analog,w:5,p:[[2,5],[.5,5],[.5,9],[0,9]]},
+{n:"Q1 Gate",net:"Q1G",c:C.signal,w:5,p:[[13,2],[15,2]]},
+{n:"D9",net:"D9",c:C.signal,w:5,p:[[13,5],[13,6.5],[11.5,6.5],[11.5,7],[11,7]]},
+];
+function comps(p){jumps(p);nano(p);nanoLinks(p);conn(p,[[1,0],[3,0]],"J1 ПИТАНИЕ",["G","+10"]);conn(p,[[16,0]],"J2 HEAT-",["H-"]);conn(p,[[0,9],[1,9]],"J3 NTC",["A0","G"]);conn(p,[[3,9],[4,9]],"J4 КНОПКА",["G","D2"]);conn(p,[[6,9],[7,9],[8,9]],"J5 LED",["K","G","R"]);part(p,12,2,12,5,"R6","220k 1%",C.analog);part(p,7,2,10,2,"R7","10k 1%",C.analog);part(p,7,3,10,3,"C2","10nF",C.analog);part(p,3,2,3,5,"R1","10k 1%",C.analog);part(p,2,2,2,5,"C1","100nF",C.analog);part(p,13,2,13,5,"R2","220R",C.signal);part(p,14,2,14,5,"R3","10k",C.signal);part(p,10,9,13,9,"R4","220R",C.signal);part(p,13,9,16,9,"R5","10k",C.signal);mosV(p,15,2,"Q1","right");mosV(p,15,6,"Q2","left");markers(p,topJ)}
+function bottom(p){routes.forEach(r=>{const q=r.p.map(x=>[mx(x[0]),gy(x[1])]),w=Math.max(3.5,r.w*.65);PL(p,q,r.c,w,"",.97)});nano(p,true,true);[[[[1,0],[3,0]],"J1 ПИТАНИЕ"],[[[0,9],[1,9]],"J3 NTC"],[[[3,9],[4,9]],"J4 КНОПКА"],[[[6,9],[7,9],[8,9]],"J5 LED"]].forEach(x=>conn(p,x[0],x[1],x[0].map(()=>""),true));conn(p,[[16,0]],"J2 HEAT-",[""],true);markers(p,routes,true)}
+function title(p,x,y,s,x2=2300){T(p,x,y,s,27,700);L(p,x,y+13,x2,y+13,"#d0d5dd",2)}function bullet(p,x,y,h,b,color=C.ink){E("circle",{cx:x,cy:y-6,r:6,fill:color},p);T(p,x+18,y,h,21,700,color);b.split("\n").forEach((s,i)=>T(p,x+18,y+30+i*25,s,18,400,C.muted));return y+40+b.split("\n").length*25}
+const total=2,p=document.getElementById("boardpage");head(p,"Монтажная плата 17 x 10 отверстий","шаг 2,54 мм · сторона деталей и зеркальная сторона пайки",2,total);T(p,460,205,"СТОРОНА ДЕТАЛЕЙ",25,700,C.ink,"middle");T(p,1560,205,"СТОРОНА ПАЙКИ - ЗЕРКАЛЬНО",25,700,C.ink,"middle");const gt=E("g",{transform:"translate(0 0)"},p);board(gt);comps(gt);const gb=E("g",{transform:"translate(1100 0)"},p);board(gb,true);bottom(gb);
+title(p,100,930,"Цвет и сечение",720);[[C.high,"HEAT- / Q1 / Q2 : 0,5-0,75 мм²"],[C.jump,"VIN +10 В / 5V от Nano : 0,2-0,35 мм²"],[C.signal,"Gate и GPIO : 0,2-0,35 мм²"],[C.analog,"A0/A1 : 0,2-0,35 мм², вдали от PWM"],[C.ground,"GND : силовая часть 0,5-0,75 мм²"]].forEach((q,i)=>{L(p,110,985+i*39,180,985+i*39,q[0],9);T(p,205,992+i*39,q[1],16,500,C.muted)});T(p,110,1208,"+42 В и W1 находятся вне платы.",16,700,C.power);T(p,110,1255,"J1 +10 В -> VIN; 5V Nano -> R1 (питание датчика).",16,500,C.muted);T(p,110,1287,"Выход внешнего DC/DC 42->10 В: J1 +10 В и GND.",16,500,C.muted);T(p,110,1335,"J1/J2 - питание и нагреватель; J3-J5 - сигнальные цепи.",16,700,C.ink);T(p,110,1367,"J1: шаг 5,08 мм; J2: одиночная силовая клемма.",16,700,C.ink);
+title(p,1260,930,"Контрольные точки",2300);[["J1 +10","10 В; вход VIN Nano"],["J1 GND","0 В; общая земля"],["J2 HEAT-","около 42 В при Q1 OFF; около 0 В при обоих ON"],["A0","около 2,5 В при 25 °C"],["A1","около 1,83 В при Q1 OFF"],["Gate Q1","D9 PWM 0-5 В; R3 -> GND"],["Gate Q2","0 В OFF; 5 В при разрешённом нагреве"]].forEach((q,i)=>{T(p,1270,985+i*42,q[0],18,700);T(p,1460,985+i*42,q[1],18,500,C.muted)});foot(p,2,total);
+drawSchematic();
+</script></html>

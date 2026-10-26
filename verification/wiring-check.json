@@ -1,0 +1,11 @@
+{
+  "j1ToVin": true,
+  "r1To5V": true,
+  "noInputTo5VJumper": true,
+  "j1Label": true,
+  "nanoVinLabel": true,
+  "singleBoardBoundary": true,
+  "noTextClipping": true,
+  "textCollisions": [],
+  "pages": 2
+}
