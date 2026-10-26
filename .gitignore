@@ -1,7 +1,5 @@
-build/
 node_modules/
-*.elf
-*.eep
-*.map
-*.with_bootloader.hex
-
+build/
+tmp/
+debug.log
+.DS_Store

@@ -1,0 +1,30 @@
+Firmware: 1.9
+Target: arduino:avr:nano:cpu=atmega328
+MCU: ATmega328P, 16 MHz
+Arduino AVR core: 1.8.8
+Compile: PASS (--warnings all)
+Flash: 9100 / 30720 bytes
+Static RAM: 251 / 2048 bytes
+Final incremental compile: zero warnings.
+HEX SHA-256: 3459E7584F10507F1A8D771B5D303F6140C858083749237805C0F2EB4C029043
+
+Tests: verification/test-report.json
+Simulator: AVR8js 0.21.0
+Model: ATmega328P GPIO, timers, UART, EEPROM, ADC and watchdog.
+Inputs: ideal MOSFETs and settled ADC values.
+Bench checks: wiring, supply integrity, electrical transients, sensor placement,
+surface temperature and thermal behaviour.
+
+Build from package root:
+arduino-cli compile --fqbn arduino:avr:nano:cpu=atmega328 --warnings all --build-path build firmware/steering_wheel_heater_v1_9
+
+Tests from package root (AVR_BIN points to the AVR toolchain bin directory):
+npm install
+npm test -- build
+
+One active heating state, with temperature-selected output.
+Full-output threshold: NORMAL_FULL_POWER_C.
+PWM ceiling: MAX_PWM to WARM_PWM over NORMAL_FULL_POWER_C..NORMAL_GENTLE_C.
+Target temperature: 32 C. Emergency temperature: 40 C.
+Display: heating below 31 C; maintaining from 31 C, with default settings.
+EEPROM: ON/OFF, with valid marker and inverted state byte.

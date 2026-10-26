@@ -1,0 +1,14 @@
+{
+  "name": "steering-wheel-heater",
+  "version": "1.9.0",
+  "private": true,
+  "scripts": {
+    "test": "node verification/firmware-sim.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "avr8js": "0.21.0"
+  }
+}

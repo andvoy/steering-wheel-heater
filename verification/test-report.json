@@ -1,0 +1,279 @@
+{
+  "firmware": "1.9",
+  "hexSha256": "3459e7584f10507f1a8d771b5d303f6140c858083749237805c0f2eb4c029043",
+  "scope": "compiled AVR binary; ideal switches and steady ADC model, not a bench test",
+  "tests": [
+    {
+      "name": "legacy stored fault 1 migrates to OFF after healthy startup",
+      "status": "PASS"
+    },
+    {
+      "name": "legacy stored fault 2 migrates to OFF after healthy startup",
+      "status": "PASS"
+    },
+    {
+      "name": "legacy stored fault 3 migrates to OFF after healthy startup",
+      "status": "PASS"
+    },
+    {
+      "name": "legacy stored fault 4 migrates to OFF after healthy startup",
+      "status": "PASS"
+    },
+    {
+      "name": "legacy stored fault 5 migrates to OFF after healthy startup",
+      "status": "PASS"
+    },
+    {
+      "name": "legacy stored fault 6 migrates to OFF after healthy startup",
+      "status": "PASS"
+    },
+    {
+      "name": "legacy stored fault 7 migrates to OFF after healthy startup",
+      "status": "PASS"
+    },
+    {
+      "name": "legacy stored fault 8 migrates to OFF after healthy startup",
+      "status": "PASS"
+    },
+    {
+      "name": "legacy stored fault 9 migrates to OFF after healthy startup",
+      "status": "PASS"
+    },
+    {
+      "name": "legacy stored fault 10 migrates to OFF after healthy startup",
+      "status": "PASS"
+    },
+    {
+      "name": "startup retest reports present cause rather than stored cause",
+      "status": "PASS"
+    },
+    {
+      "name": "USB before 42 V: fault 3 -> stable supply -> OFF, no working heat",
+      "status": "PASS"
+    },
+    {
+      "name": "supply chatter restarts the continuous one-second recovery interval",
+      "status": "PASS"
+    },
+    {
+      "name": "supply recovery detects shorted Q1 and stays faulted after repair",
+      "status": "PASS"
+    },
+    {
+      "name": "healthy saved ON resumes normal heating above zero; button OFF persists",
+      "status": "PASS"
+    },
+    {
+      "name": "saved OFF and erased EEPROM do not start working heat",
+      "status": "PASS"
+    },
+    {
+      "name": "above target HEATING stops heat, below target resumes",
+      "status": "PASS"
+    },
+    {
+      "name": "40 C emergency closes both keys and stays latched after cooling",
+      "status": "PASS"
+    },
+    {
+      "name": "fault detection {\"q1Short\":true}",
+      "status": "PASS"
+    },
+    {
+      "name": "fault detection {\"q2Short\":true}",
+      "status": "PASS"
+    },
+    {
+      "name": "fault detection {\"q1Open\":true}",
+      "status": "PASS"
+    },
+    {
+      "name": "fault detection {\"q2Open\":true}",
+      "status": "PASS"
+    },
+    {
+      "name": "fault detection {\"ntc\":0}",
+      "status": "PASS"
+    },
+    {
+      "name": "fault detection {\"ntc\":1023}",
+      "status": "PASS"
+    },
+    {
+      "name": "fault detection {\"heater\":false}",
+      "status": "PASS"
+    },
+    {
+      "name": "sensor repair needs manual hold or reset, not auto recovery",
+      "status": "PASS"
+    },
+    {
+      "name": "readable telemetry: one line, blank separator, percent, no raw diagnostics",
+      "status": "PASS"
+    },
+    {
+      "name": "invalid NTC shown as nan, not old healthy temperature",
+      "status": "PASS"
+    },
+    {
+      "name": "full-power region joins temperature regulation without a power discontinuity",
+      "status": "PASS"
+    },
+    {
+      "name": "fresh temperature resumes HEATING promptly after cooling",
+      "status": "PASS"
+    },
+    {
+      "name": "trip restart at -20 C respects saved request and temperature",
+      "status": "PASS"
+    },
+    {
+      "name": "trip restart at -5 C respects saved request and temperature",
+      "status": "PASS"
+    },
+    {
+      "name": "trip restart at 1 C respects saved request and temperature",
+      "status": "PASS"
+    },
+    {
+      "name": "trip restart at 20 C respects saved request and temperature",
+      "status": "PASS"
+    },
+    {
+      "name": "trip restart at 31.8 C respects saved request and temperature",
+      "status": "PASS"
+    },
+    {
+      "name": "trip restart at 35 C respects saved request and temperature",
+      "status": "PASS"
+    },
+    {
+      "name": "trip restart at 41 C respects saved request and temperature",
+      "status": "PASS"
+    },
+    {
+      "name": "cold OFF waits for button; OFF is retained for the next trip",
+      "status": "PASS"
+    },
+    {
+      "name": "soft rise reaches normal cap, button OFF and emergency are not ramped down",
+      "status": "PASS"
+    },
+    {
+      "name": "temperature alone selects output across a ten-minute uptime change",
+      "status": "PASS"
+    },
+    {
+      "name": "hot restart faults; cooled manual recovery leaves OFF, then button starts HEATING",
+      "status": "PASS"
+    },
+    {
+      "name": "telemetry does not change remembered ON/OFF",
+      "status": "PASS"
+    },
+    {
+      "name": "normal heating curve at 2 C",
+      "status": "PASS"
+    },
+    {
+      "name": "normal heating curve at 10 C",
+      "status": "PASS"
+    },
+    {
+      "name": "normal heating curve at 20 C",
+      "status": "PASS"
+    },
+    {
+      "name": "normal heating curve at 29.3 C",
+      "status": "PASS"
+    },
+    {
+      "name": "near target PI requests less than warm ceiling; at target no forced minimum",
+      "status": "PASS"
+    },
+    {
+      "name": "temperature jump lowers ceiling immediately without a downward ramp",
+      "status": "PASS"
+    },
+    {
+      "name": "startup prints version and live status; EEPROM retains only ON/OFF",
+      "status": "PASS"
+    },
+    {
+      "name": "voltage estimate uses OFF sample, never the low Drain during PWM",
+      "status": "PASS"
+    },
+    {
+      "name": "voltage changes affect power quadratically using actual PWM",
+      "status": "PASS"
+    },
+    {
+      "name": "hot start has no fabricated supply estimate or new diagnostic heat pulse",
+      "status": "PASS"
+    },
+    {
+      "name": "stale voltage is not presented as a current measurement",
+      "status": "PASS"
+    },
+    {
+      "name": "missing power or open heater does not masquerade as a supply measurement",
+      "status": "PASS"
+    },
+    {
+      "name": "both red LEDs: 300 ms ON, 300 ms OFF, exactly 2 s between series",
+      "status": "PASS"
+    },
+    {
+      "name": "reset flags leave normal self-test and saved ON/OFF behaviour unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "running overheat stops at the next control sample and keeps both keys off",
+      "status": "PASS"
+    },
+    {
+      "name": "hot manual reset stays locked and produces no conduction pulse",
+      "status": "PASS"
+    },
+    {
+      "name": "after an overheat fault, a healthy restart stays OFF and waits for button",
+      "status": "PASS"
+    },
+    {
+      "name": "fault handling writes ON/OFF bytes and leaves old reason bytes untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "corrupt state starts OFF after a healthy self-test",
+      "status": "PASS"
+    },
+    {
+      "name": "source keeps comments in settings and removes obsolete temperature/reset branches",
+      "status": "PASS"
+    },
+    {
+      "name": "button ON checks fresh overtemperature before a conduction test",
+      "status": "PASS"
+    },
+    {
+      "name": "39.5 C remains below the emergency boundary with normal HEATING regulation",
+      "status": "PASS"
+    },
+    {
+      "name": "display shows heating at 26.3 C and maintaining only near the target",
+      "status": "PASS"
+    },
+    {
+      "name": "cold full output survives uptime changes and returns after cooling",
+      "status": "PASS"
+    },
+    {
+      "name": "stuck ADC still trips watchdog",
+      "status": "PASS"
+    },
+    {
+      "name": "millis rollover: control and telemetry continue without unsafe output",
+      "status": "PASS"
+    }
+  ]
+}
